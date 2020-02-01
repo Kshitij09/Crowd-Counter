@@ -46,8 +46,23 @@
         android:id="@+id/gallery_fragment"
         android:name="com.kshitijpatil.crowdcounter.ui.gallery.GalleryFragment"
         android:label="GalleryFragment">
+
+        <action
+            android:id="@+id/action_gallery_to_details"
+            app:destination="@id/details_fragment" />
+
         <argument
             android:name="root_directory"
+            app:argType="string" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/details_fragment"
+        android:name="com.kshitijpatil.crowdcounter.ui.details.DetailsFragment"
+        android:label="DetailsFragment">
+
+        <argument
+            android:name="image_path"
             app:argType="string" />
     </fragment>
 

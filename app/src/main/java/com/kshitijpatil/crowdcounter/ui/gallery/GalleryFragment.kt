@@ -122,6 +122,14 @@ class GalleryFragment : Fragment() {
             }
         }
 
+        view.findViewById<ImageButton>(R.id.upload_button).setOnClickListener {
+            mediaList.getOrNull(mediaViewPager.currentItem)?.let { mediaFile ->
+                Navigation.findNavController(requireActivity(), R.id.fragment_container).navigate(
+                    GalleryFragmentDirections.actionGalleryToDetails(mediaFile.absolutePath)
+                )
+            }
+        }
+
         // Handle delete button press
         view.findViewById<ImageButton>(R.id.delete_button).setOnClickListener {
             AlertDialog.Builder(view.context, android.R.style.Theme_Material_Dialog)

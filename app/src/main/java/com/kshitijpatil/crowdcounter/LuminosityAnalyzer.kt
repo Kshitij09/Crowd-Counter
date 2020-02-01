@@ -69,9 +69,10 @@ class LuminosityAnalyzer(listener: LumaListener? = null) : ImageAnalysis.Analyze
         val timestampLast = frameTimestamps.peekLast() ?: currentTime
         framesPerSecond = 1.0 / ((timestampFirst - timestampLast) /
                 frameTimestamps.size.coerceAtLeast(1).toDouble()) * 1000.0
-
+        println("Analyzing")
         // Calculate the average luma no more often than every second
         if (frameTimestamps.first - lastAnalyzedTimestamp >= TimeUnit.SECONDS.toMillis(1)) {
+
             lastAnalyzedTimestamp = frameTimestamps.first
 
             // Since format in ImageAnalysis is YUV, image.planes[0] contains the luminance

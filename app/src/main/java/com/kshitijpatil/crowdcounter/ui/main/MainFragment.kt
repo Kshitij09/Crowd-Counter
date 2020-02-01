@@ -32,10 +32,13 @@ import androidx.lifecycle.ViewModelProviders
 import androidx.lifecycle.lifecycleScope
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import androidx.navigation.Navigation
+import com.afollestad.assent.Permission
+import com.afollestad.assent.runWithPermissions
 import com.bumptech.glide.Glide
 import com.bumptech.glide.request.RequestOptions
 import com.kshitijpatil.crowdcounter.*
 import com.kshitijpatil.crowdcounter.R
+import com.kshitijpatil.crowdcounter.ml.CrowdClassifier
 import com.kshitijpatil.crowdcounter.ui.gallery.EXTENSION_WHITELIST
 import com.kshitijpatil.crowdcounter.utils.ANIMATION_FAST_MILLIS
 import com.kshitijpatil.crowdcounter.utils.ANIMATION_SLOW_MILLIS
@@ -73,6 +76,9 @@ class MainFragment : Fragment() {
     private var imageCapture: ImageCapture? = null
     private var imageAnalyzer: ImageAnalysis? = null
     private var camera: Camera? = null
+    private val classifier: CrowdClassifier by lazy {
+        CrowdClassifier(requireContext())
+    }
 
 
     /** Volume down button receiver used to trigger shutter */
@@ -202,6 +208,20 @@ class MainFragment : Fragment() {
         override fun onImageSaved(photoFile: File) {
             Log.d(TAG, "Photo capture succeeded: ${photoFile.absolutePath}")
 
+            /*lifecycleScope.launch(Dispatchers.Main) {
+                var bitmap = BitmapFactory.decodeFile(photoFile.absolutePath)
+
+                bitmap = Bitmap.createScaledBitmap(bitmap, 224, 224, true)
+
+                val modelInput = convertBitmapToByteBuffer(bitmap)
+
+
+            }*/
+
+            /*lifecycleScope.launch {
+                classifier.inference(bitmap)
+            }*/
+
             // We can only change the foreground Drawable using API level 23+ API
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                 // Update the gallery thumbnail with latest picture taken
@@ -240,7 +260,11 @@ class MainFragment : Fragment() {
     }
 
     /** Declare and bind preview, capture and analysis use cases */
-    private fun bindCameraUseCases() {
+    private fun bindCameraUseCases() = runWithPermissions(
+        Permission.CAMERA,
+        Permission.READ_EXTERNAL_STORAGE,
+        Permission.WRITE_EXTERNAL_STORAGE
+    ) {
 
         // Get screen metrics used to setup camera for full screen resolution
         val metrics = DisplayMetrics().also { viewFinder.display.getRealMetrics(it) }
@@ -343,6 +367,7 @@ class MainFragment : Fragment() {
 
                 // Setup image capture listener which is triggered after photo has been taken
                 imageCapture.takePicture(photoFile, metadata, mainExecutor, imageSavedListener)
+//                imageCapture.takePicture(mainExecutor, imageCapturedListener)
 
                 // We can only change the foreground Drawable using API level 23+ API
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
@@ -406,6 +431,8 @@ class MainFragment : Fragment() {
         private const val PHOTO_EXTENSION = ".jpg"
         private const val RATIO_4_3_VALUE = 4.0 / 3.0
         private const val RATIO_16_9_VALUE = 16.0 / 9.0
+        private const val INPUT_TENSOR_WIDTH = 224
+        private const val INPUT_TENSOR_HEIGHT = 224
 
         /** Helper function used to create a timestamped file */
         private fun createFile(baseFolder: File, format: String, extension: String) =
@@ -414,5 +441,23 @@ class MainFragment : Fragment() {
                     .format(System.currentTimeMillis()) + extension
             )
     }
+
 }
 // TODO: Use Viewstub for TextureView
+
+/*
+Working pytorch code
+val module = Module.load(Utils.assetFilePath(requireContext(), "mobilenetv2.pth"))
+
+                // preparing input tensor
+                val inputTensor = TensorImageUtils.bitmapToFloat32Tensor(
+                    bitmap,
+                    TensorImageUtils.TORCHVISION_NORM_MEAN_RGB,
+                    TensorImageUtils.TORCHVISION_NORM_STD_RGB
+                )
+                // running the model
+                val outputTensor = module.forward(IValue.from(inputTensor)).toTensor()
+
+                // getting tensor content as java array of floats
+                val scores = outputTensor.dataAsFloatArray
+ */
